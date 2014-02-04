@@ -1,5 +1,6 @@
 require 'matrix'
 
+#help class
 class Cell < Vector
   def x
     self[0]
@@ -70,7 +71,7 @@ class Worm < Thread
   end
 
   def to_s
-    (@id%93+33).chr
+    (@id%93+33).chr #give every worm a distinct character
   end
 
   def step
