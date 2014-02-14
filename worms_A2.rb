@@ -141,15 +141,15 @@ class Render
 
   def draw 
     str = ""
-    @world.height.times do |x|
-      str += draw_row x
+    @world.height.times do |y|
+      str += draw_row y
     end
     str
   end
 
-  def draw_row x
+  def draw_row y
     str = ""
-    @world.width.times do |y|
+    @world.width.times do |x|
       str += draw_cell(Cell[x,y])
     end
     str += "\n"
