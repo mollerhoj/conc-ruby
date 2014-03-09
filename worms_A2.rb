@@ -26,16 +26,7 @@ class World
     @worms = []
     @width = width
     @height = height
-    @render = Render.new self
-    @mutex = Mutex.new
-    init_mutexes
-  end
-
-  def step
-    while true
-      puts @render.draw
-      puts @render.clear
-    end
+    @mutexes = Matrix.build(@width,@height) {Mutex.new}
   end
 
   def place_meeting cell
@@ -47,19 +38,8 @@ class World
     return nil
   end
 
-  def mutex_at_position cell
-    return @mutexes[cell.x][cell.y]
-  end
-
-  #TODO: use matrix
-  def init_mutexes
-    @mutexes = []
-    width.times do |x|
-      @mutexes << []
-      height.times do |y|
-        @mutexes[x][y] = Mutex.new
-      end
-    end
+  def mutex_at cell
+    return @mutexes[cell.x,cell.y]
   end
 
   def add_worms n
@@ -98,15 +78,14 @@ class Worm < Thread
   end
 
   def move
-    if new_position = move_to
-      new_mutex = @world.mutex_at_position new_position
-      if new_mutex.try_lock
-        self.position = new_position
-        if @mutex
-          @mutex.unlock
-        end
-        @mutex = new_mutex
+    new_position = move_to                   # The worm is trying to go to 'new_position'.
+    new_mutex = @world.mutex_at new_position # 'new_mutex' is the mutex at the 'new_position'.
+    if new_mutex.try_lock                    # if possible, the worm acquires the lock at 'new_position'.
+      self.position = new_position           # if the lock has been acquired, change inner position state accordingly.
+      if @mutex                              # if the worm had the mutex at its old position, then unlock it.
+        @mutex.unlock
       end
+      @mutex = new_mutex                     # the current mutex is now the mutex at the 'new_position'.
     end
   end
 
@@ -133,6 +112,13 @@ class Render
 
   def initialize world
     @world = world
+  end
+
+  def step
+    while true
+      puts draw
+      puts clear
+    end
   end
 
   def clear
@@ -164,6 +150,9 @@ class Render
   end
 end
 
-w = World.new(ARGV[0].to_i,ARGV[1].to_i)
-w.add_worms ARGV[2].to_i
-w.step
+puts "render"
+world = World.new(ARGV[0].to_i,ARGV[1].to_i)
+world.add_worms ARGV[2].to_i
+
+r = Render.new world
+r.step
